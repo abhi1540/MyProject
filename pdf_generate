@@ -352,3 +352,87 @@ def generate_multipage_pdf(request):
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="items.pdf"'
     return response
+
+
+
+def generate_multi_id_card_pdf(request):
+    # Create a buffer to hold the PDF content
+    buffer = BytesIO()
+
+    # Define A4 page size
+    page_width, page_height = A4
+
+    # Define ID card size (3 inches by 2 inches)
+    id_card_width = 3 * inch  # Width in inches
+    id_card_height = 2 * inch  # Height in inches
+    margin = 10 * mm           # Margin between ID cards and page edges
+    card_margin = 5 * mm       # Margin between ID cards
+
+    # Create a canvas object with A4 page size
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+
+    # Define styles for the text
+    heading_style = ParagraphStyle(
+        name='Heading',
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=14,
+        alignment=1  # Center alignment
+    )
+    subheading_style = ParagraphStyle(
+        name='Subheading',
+        fontName='Helvetica',
+        fontSize=10,
+        leading=12,
+        alignment=1  # Center alignment
+    )
+
+    # Content for the ID card
+    heading = Paragraph("John Doe", heading_style)
+    subheading = Paragraph("Software Engineer", subheading_style)
+    additional_info = Paragraph("Company Name", subheading_style)
+
+    def draw_id_card(pdf, x, y):
+        """Draw a single ID card at the given x, y position."""
+        # Add heading to the ID card
+        w, h = heading.wrap(id_card_width - 20, id_card_height)
+        heading.drawOn(pdf, x + (id_card_width - w) / 2, y + id_card_height - 20 - h)
+
+        # Add subheading to the ID card
+        w, h = subheading.wrap(id_card_width - 20, id_card_height)
+        subheading.drawOn(pdf, x + (id_card_width - w) / 2, y + id_card_height - 40 - h)
+
+        # Add additional info to the ID card
+        w, h = additional_info.wrap(id_card_width - 20, id_card_height)
+        additional_info.drawOn(pdf, x + (id_card_width - w) / 2, y + id_card_height - 60 - h)
+
+        # Add a rectangle around the ID card for visual separation (optional)
+        pdf.rect(x, y, id_card_width, id_card_height, stroke=1, fill=0)
+
+    # Calculate the number of ID cards per column and row
+    cards_per_column = int((page_height - 2 * margin) / (id_card_height + card_margin))
+    cards_per_row = 2  # Fixed to 2 columns per page
+    cards_per_page = min(cards_per_column * cards_per_row, 17)
+
+    # Draw ID cards in a grid layout
+    card_index = 0
+    for i in range(20):  # Example: Create 20 ID cards
+        if card_index % cards_per_page == 0 and card_index != 0:
+            pdf.showPage()  # Start a new page
+
+        row = card_index // cards_per_row % cards_per_column
+        col = card_index % cards_per_row
+
+        x = margin + col * (id_card_width + card_margin)
+        y = page_height - margin - (row + 1) * (id_card_height + card_margin)
+
+        draw_id_card(pdf, x, y)
+        card_index += 1
+
+    # Close the PDF content
+    pdf.save()
+
+    # Set the HTTP response content type and return the PDF
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="id_cards.pdf"'
+    return response
