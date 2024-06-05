@@ -436,3 +436,316 @@ def generate_multi_id_card_pdf(request):
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="id_cards.pdf"'
     return response
+
+######################################################
+
+def generate_id_card_pdf_a4(request):
+    # Create a buffer to hold the PDF content
+    buffer = BytesIO()
+
+    # Define A4 page size
+    page_width, page_height = A4
+
+    # Define ID card size (3 inches by 2 inches)
+    id_card_width = 3.5 * inch  # Width in inches
+    id_card_height = 2.2 * inch  # Height in inches
+    id_card_x = 0.5 * inch  # Left margin
+    id_card_y = page_height - id_card_height - 0.5 * inch  # Top margin
+
+    # Create a canvas object with A4 page size
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+
+    # Define styles for the text
+    heading_style = ParagraphStyle(
+        name='Heading',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
+    )
+    subheading_style = ParagraphStyle(
+        name='Subheading',
+        fontName='Helvetica',
+        fontSize=8,
+        leading=10,
+        spaceAfter=10,
+    )
+
+    box_header_style = ParagraphStyle(
+        name='BoxHeader',
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=12,
+        alignment=1,  # Center alignment
+        textColor="white",
+        spaceAfter = 10,
+    )
+
+    # Placeholder data
+    profile_picture_path = 'SampleDjango/test.jpg'
+    company_logo_path = 'SampleDjango/test.jpg'
+    qr_code_path = 'SampleDjango/test.jpg'
+    name = "Name: John Doe"
+    card_number = "Card No: ID123456789"
+    designation = "Desig: Software Engineer"
+    another_info = "Another: another info"
+    another_info1 = "Another1: another info"
+    another_info2 = "Another2: another info"
+
+    # Draw ID card background
+    pdf.setFillColorRGB(0.9, 0.9, 0.9)  # Light grey background
+    pdf.rect(id_card_x, id_card_y, id_card_width, id_card_height, stroke=1, fill=1)
+
+    # Draw colored rectangle box in the top middle portion
+    box_width = id_card_width / 2
+    box_height = 35  # Adjust the height as needed
+    box_x = id_card_x + (id_card_width - box_width) / 2
+    box_y = id_card_y + id_card_height - box_height  # 10 units below the top edge of the ID card
+
+    pdf.setFillColorRGB(0.2, 0.6, 0.8)  # Example color (blue)
+    pdf.rect(box_x, box_y, box_width, box_height, fill=1)
+
+    box_header = "Employee ID Card"
+    box_header_paragraph = Paragraph(box_header, box_header_style)
+    box_header_width, box_header_height = box_header_paragraph.wrap(box_width, box_height)
+    box_header_paragraph.drawOn(pdf, box_x + (box_width - box_header_width) / 2,
+                                box_y + (box_height - box_header_height) / 2)
+
+    # Draw images
+    pdf.drawImage(profile_picture_path, id_card_x + 10, id_card_y + id_card_height - 50, width=30, height=40)
+    pdf.drawImage(company_logo_path, id_card_x + id_card_width - 55, id_card_y + id_card_height - 50, width=40,
+                  height=40)
+    pdf.drawImage(qr_code_path, id_card_x + id_card_width - 65, id_card_y + id_card_height - 115, width=60, height=60)
+
+    # Add text information
+    name_paragraph = Paragraph(name, heading_style)
+    card_number_paragraph = Paragraph(card_number, subheading_style)
+    designation_paragraph = Paragraph(designation, subheading_style)
+    another_info_paragraph = Paragraph(another_info, subheading_style)
+    another_info1_paragraph = Paragraph(another_info1, subheading_style)
+    another_info2_paragraph = Paragraph(another_info2, subheading_style)
+
+    # Calculate positions
+    name_width, name_height = name_paragraph.wrap(id_card_width - 20, id_card_height)
+    card_number_width, card_number_height = card_number_paragraph.wrap(id_card_width - 20, id_card_height)
+    designation_width, designation_height = designation_paragraph.wrap(id_card_width - 20, id_card_height)
+    another_info_width, another_info_height = another_info_paragraph.wrap(id_card_width - 20, id_card_height)
+    another_info1_width, another_info1_height = another_info1_paragraph.wrap(id_card_width - 20, id_card_height)
+    another_info2_width, another_info2_height = another_info2_paragraph.wrap(id_card_width - 20, id_card_height)
+
+    # Draw text
+    name_paragraph.drawOn(pdf, id_card_x + (id_card_width - name_width) / 2, id_card_y + id_card_height - 55 -
+                          name_height)
+    card_number_paragraph.drawOn(pdf, id_card_x + (id_card_width - card_number_width) / 2, id_card_y + id_card_height
+                                 - 65 - card_number_height)
+    designation_paragraph.drawOn(pdf, id_card_x + (id_card_width - designation_width) / 2, id_card_y + id_card_height
+                                 - 75 - designation_height)
+    another_info_paragraph.drawOn(pdf, id_card_x + (id_card_width - another_info_width) / 2, id_card_y + id_card_height
+                                 - 85 - another_info_height)
+    another_info1_paragraph.drawOn(pdf, id_card_x + (id_card_width - another_info1_width) / 2, id_card_y + id_card_height
+                                 - 95 - another_info1_height)
+    another_info2_paragraph.drawOn(pdf, id_card_x + (id_card_width - another_info2_width) / 2, id_card_y + id_card_height
+                                 - 105 - another_info2_height)
+
+    square_size = 30  # Size of the square
+    square_x = id_card_x + 10
+    square_y = id_card_y + 8
+
+
+    pdf.setFillColorRGB(0.7, 0.7, 0.7)  # Light grey color
+    pdf.rect(square_x, square_y, square_size, square_size, fill=1)
+
+    pdf.setFillColorRGB(0, 0, 0)  # Black color
+    pdf.setFont("Helvetica-Bold", 20)
+    pdf.drawString(square_x + square_size / 2 - 6, square_y + square_size / 2 - 6, "A")
+
+    fan_text = "FAN"
+    pdf.setFont("Helvetica-Bold", 24)
+    for i, char in enumerate(fan_text):
+        pdf.drawString(id_card_x + id_card_width / 1.5 - 10, id_card_y + id_card_height / 1.8 - i * 20, char)
+
+    # Add two paragraphs on the bottom right
+    paragraph1 = Paragraph("Paragraph 1", heading_style)
+    paragraph2 = Paragraph("Paragraph 2", heading_style)
+
+    para1_width, para1_height = paragraph1.wrap(id_card_width / 2, id_card_height)
+    para2_width, para2_height = paragraph2.wrap(id_card_width / 2, id_card_height)
+
+    paragraph1.drawOn(pdf, id_card_x + id_card_width - para1_width - 5, id_card_y + para2_height + 10)
+    paragraph2.drawOn(pdf, id_card_x + id_card_width - para2_width - 5, id_card_y + 5)
+
+    pdf.showPage()  # Finalize the page
+
+    # Close the PDF content
+    pdf.save()
+
+    # Set the HTTP response content type and return the PDF
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="id_card.pdf"'
+    return response
+
+
+
+def generate_id_card_pdf_a4_multi(request):
+    # Create a buffer to hold the PDF content
+    buffer = BytesIO()
+
+    # Define A4 page size
+    page_width, page_height = A4
+
+    # Define ID card size (3.5 inches by 2.2 inches)
+    id_card_width = 3.5 * inch
+    id_card_height = 2.2 * inch
+
+    # Define spacing between ID cards
+    horizontal_spacing = 0.25 * inch
+    vertical_spacing = 0.25 * inch
+
+    # Create a canvas object with A4 page size
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+
+    # Define styles for the text
+    heading_style = ParagraphStyle(
+        name='Heading',
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
+    )
+    subheading_style = ParagraphStyle(
+        name='Subheading',
+        fontName='Helvetica',
+        fontSize=8,
+        leading=10,
+        spaceAfter=10,
+    )
+    box_header_style = ParagraphStyle(
+        name='BoxHeader',
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        leading=12,
+        alignment=1,  # Center alignment
+        textColor="white",
+        spaceAfter=10,
+    )
+
+    # Placeholder data for multiple ID cards
+    id_cards_data = [
+                        {
+                            'profile_picture_path': 'SampleDjango/test.jpg',
+                            'company_logo_path': 'SampleDjango/test.jpg',
+                            'qr_code_path': 'SampleDjango/test.jpg',
+                            'name': "Name: John Doe",
+                            'card_number': "Card No: ID123456789",
+                            'designation': "Desig: Software Engineer",
+                            'another_info': "Another: another info",
+                            'another_info1': "Another1: another info",
+                            'another_info2': "Another2: another info",
+                        },
+                        # Add more entries as needed
+                    ] * 17  # Example: create 17 cards for testing pagination
+
+    cards_per_page = 8
+    num_cards = len(id_cards_data)
+
+    for i, card in enumerate(id_cards_data):
+        if i % cards_per_page == 0 and i > 0:
+            pdf.showPage()  # Create a new page after every 6 cards
+
+        # Calculate position for each card on the page with spacing
+        col = (i % 2)
+        row = (i % cards_per_page) // 2
+        x_offset = col * (id_card_width + horizontal_spacing) + horizontal_spacing
+        y_offset = page_height - (row * (id_card_height + vertical_spacing) + vertical_spacing + id_card_height)
+
+        # Draw ID card background
+        pdf.setFillColorRGB(0.9, 0.9, 0.9)  # Light grey background
+        pdf.rect(x_offset, y_offset, id_card_width, id_card_height, stroke=1, fill=1)
+
+        # Draw colored rectangle box in the top middle portion
+        box_width = id_card_width / 2
+        box_height = 35  # Adjust the height as needed
+        box_x = x_offset + (id_card_width - box_width) / 2
+        box_y = y_offset + id_card_height - box_height
+
+        pdf.setFillColorRGB(0.2, 0.6, 0.8)  # Example color (blue)
+        pdf.rect(box_x, box_y, box_width, box_height, fill=1)
+
+        box_header = "Employee ID Card"
+        box_header_paragraph = Paragraph(box_header, box_header_style)
+        box_header_width, box_header_height = box_header_paragraph.wrap(box_width, box_height)
+        box_header_paragraph.drawOn(pdf, box_x + (box_width - box_header_width) / 2,
+                                    box_y + (box_height - box_header_height) / 2)
+
+        # Draw images
+        pdf.drawImage(card['profile_picture_path'], x_offset + 10, y_offset + id_card_height - 50, width=30,
+                      height=40)
+        pdf.drawImage(card['company_logo_path'], x_offset + id_card_width - 55, y_offset + id_card_height - 50,
+                      width=40, height=40)
+        pdf.drawImage(card['qr_code_path'], x_offset + id_card_width - 65, y_offset + id_card_height - 115,
+                      width=60, height=60)
+
+        # Add text information
+        name_paragraph = Paragraph(card['name'], heading_style)
+        card_number_paragraph = Paragraph(card['card_number'], subheading_style)
+        designation_paragraph = Paragraph(card['designation'], subheading_style)
+        another_info_paragraph = Paragraph(card['another_info'], subheading_style)
+        another_info1_paragraph = Paragraph(card['another_info1'], subheading_style)
+        another_info2_paragraph = Paragraph(card['another_info2'], subheading_style)
+
+        # Calculate positions
+        name_width, name_height = name_paragraph.wrap(id_card_width - 20, id_card_height)
+        card_number_width, card_number_height = card_number_paragraph.wrap(id_card_width - 20, id_card_height)
+        designation_width, designation_height = designation_paragraph.wrap(id_card_width - 20, id_card_height)
+        another_info_width, another_info_height = another_info_paragraph.wrap(id_card_width - 20, id_card_height)
+        another_info1_width, another_info1_height = another_info1_paragraph.wrap(id_card_width - 20, id_card_height)
+        another_info2_width, another_info2_height = another_info2_paragraph.wrap(id_card_width - 20, id_card_height)
+
+        # Draw text
+        name_paragraph.drawOn(pdf, x_offset + (id_card_width - name_width) / 2,
+                              y_offset + id_card_height - 55 - name_height)
+        card_number_paragraph.drawOn(pdf, x_offset + (id_card_width - card_number_width) / 2,
+                                     y_offset + id_card_height - 65 - card_number_height)
+        designation_paragraph.drawOn(pdf, x_offset + (id_card_width - designation_width) / 2,
+                                     y_offset + id_card_height - 75 - designation_height)
+        another_info_paragraph.drawOn(pdf, x_offset + (id_card_width - another_info_width) / 2,
+                                      y_offset + id_card_height - 85 - another_info_height)
+        another_info1_paragraph.drawOn(pdf, x_offset + (id_card_width - another_info1_width) / 2,
+                                       y_offset + id_card_height - 95 - another_info1_height)
+        another_info2_paragraph.drawOn(pdf, x_offset + (id_card_width - another_info2_width) / 2,
+                                       y_offset + id_card_height - 105 - another_info2_height)
+
+        square_size = 30  # Size of the square
+        square_x = x_offset + 10
+        square_y = y_offset + 8
+
+        pdf.setFillColorRGB(0.7, 0.7, 0.7)  # Light grey color
+        pdf.rect(square_x, square_y, square_size, square_size, fill=1)
+
+        pdf.setFillColorRGB(0, 0, 0)  # Black color
+        pdf.setFont("Helvetica-Bold", 20)
+        pdf.drawString(square_x + square_size / 2 - 6, square_y + square_size / 2 - 6, "A")
+
+        fan_text = "FAN"
+        pdf.setFont("Helvetica-Bold", 24)
+        for j, char in enumerate(fan_text):
+            pdf.drawString(x_offset + id_card_width / 1.5 - 10, y_offset + id_card_height / 1.8 - j * 20, char)
+
+        # Add two paragraphs on the bottom right
+        paragraph1 = Paragraph("Paragraph 1", heading_style)
+        paragraph2 = Paragraph("Paragraph 2", heading_style)
+
+        para1_width, para1_height = paragraph1.wrap(id_card_width / 2, id_card_height)
+        para2_width, para2_height = paragraph2.wrap(id_card_width / 2, id_card_height)
+
+        paragraph1.drawOn(pdf, x_offset + id_card_width - para1_width - 5, y_offset + para2_height + 10)
+        paragraph2.drawOn(pdf, x_offset + id_card_width - para2_width - 5, y_offset + 5)
+
+    pdf.showPage()  # Finalize the last page
+
+    # Close the PDF content
+    pdf.save()
+
+    # Set the HTTP response content type and return the PDF
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="id_cards.pdf"'
+    return response
+
