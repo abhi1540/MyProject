@@ -749,3 +749,113 @@ def generate_id_card_pdf_a4_multi(request):
     response['Content-Disposition'] = 'inline; filename="id_cards.pdf"'
     return response
 
+
+
+def generate_multipage_pdf_extended(request):
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+
+    heading_style = ParagraphStyle(
+        name='Heading',
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        leading=22,
+        spaceBefore=20,
+        spaceAfter=10,
+        alignment=1,
+        underline=True
+    )
+    subheading_style = ParagraphStyle(
+        name='Subheading',
+        fontName='Helvetica-Bold',
+        fontSize=14,
+        leading=18,
+        spaceBefore=10,
+        spaceAfter=5,
+        alignment=1
+    )
+    table_style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold', 10),
+        ('FONT', (0, 1), (-1, -1), 'Helvetica', 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER')
+    ])
+
+    def add_page_heading(pdf, heading_text, subheading_text):
+        canvas_width, canvas_height = A4
+        heading = Paragraph(heading_text, heading_style)
+        w, h = heading.wrap(canvas_width - 40, canvas_height)
+        heading.drawOn(pdf, (canvas_width - w) / 2, canvas_height - 40)
+
+        subheading = Paragraph(subheading_text, subheading_style)
+        w, h = subheading.wrap(canvas_width - 40, canvas_height - 70)
+        subheading.drawOn(pdf, (canvas_width - w) / 2, canvas_height - 70)
+
+    def add_table_data(pdf, data, col_widths, start_y):
+        canvas_width, canvas_height = A4
+        table = Table(data, colWidths=col_widths, style=table_style)
+        table_width, table_height = table.wrap(canvas_width - 40, canvas_height - start_y - 10)
+        if table_height > start_y - 50:
+            pdf.showPage()
+            start_y = canvas_height - 40  # Adjust start_y for new page without header space
+            table = Table(data, colWidths=col_widths, style=table_style)
+            table_width, table_height = table.wrap(canvas_width - 40, canvas_height - start_y - 10)
+        table.drawOn(pdf, 20, start_y - table_height)
+        start_y -= table_height + 10
+        return start_y
+
+    def split_table_data(data, available_height):
+        row_height = 20
+        rows_per_page = int(available_height / row_height)
+        pages = []
+        for i in range(0, len(data), rows_per_page):
+            pages.append(data[i:i + rows_per_page])
+        return pages
+
+    def process_page(pdf, data, heading_text, subheading_text):
+        col_widths = [(A4[0] - 40) / len(data[0])] * len(data[0])
+        data_pages = split_table_data(data, A4[1] - 110)
+        for idx, table_data in enumerate(data_pages):
+            if idx == 0:
+                add_page_heading(pdf, heading_text, subheading_text)
+                start_y = A4[1] - 110
+            else:
+                pdf.showPage()
+                start_y = A4[1] - 40
+            start_y = add_table_data(pdf, table_data, col_widths, start_y)
+            if start_y < 50:
+                pdf.showPage()
+
+    data_page1 = [
+        ['Column 1', 'Column 2', 'Column 3'],
+        ['Data 1', 'Data 2', 'Data 3'],
+        ['Data 8', 'Data 9', 'Data 10'],
+    ]
+    heading_text1 = "Heading - Page 1"
+    subheading_text1 = "Subheading Text for Page 1"
+    process_page(pdf, data_page1, heading_text1, subheading_text1)
+    pdf.showPage()  # Create a new page for the next set of data
+
+    data_page2 = [
+        ['Column 1', 'Column 2', 'Column 3', 'Column 4', 'Column 5', 'Column 6', 'Column 7'],
+        ['Data 1', 'Data 2', 'Data 3', 'Data 4', 'Data 5', 'Data 6', 'Data 7'],
+        ['Data 8', 'Data 9', 'Data 10', 'Data 11', 'Data 12', 'Data 13', 'Data 14'],
+    ]
+    heading_text2 = "Heading - Page 2"
+    subheading_text2 = "Subheading Text for Page 2"
+    process_page(pdf, data_page2, heading_text2, subheading_text2)
+    pdf.showPage()  # Create a new page for the next set of data
+
+    data_page3 = [
+        ['Column 1', 'Column 2', 'Column 3', 'Column 4', 'Column 5', 'Column 6', 'Column 7'],
+    ] + [['Data 1', 'Data 2', 'Data 3', 'Data 4', 'Data 5', 'Data 6', 'Data 7']] * 50 + [
+        ['Data 8', 'Data 9', 'Data 10', 'Data 11', 'Data 12', 'Data 13', 'Data 14'],
+    ]
+    heading_text3 = "Heading - Page 3"
+    subheading_text3 = "Subheading Text for Page 3"
+    process_page(pdf, data_page3, heading_text3, subheading_text3)
+
+    pdf.save()
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="items.pdf"'
+    return response
